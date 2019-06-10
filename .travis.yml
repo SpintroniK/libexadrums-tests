@@ -1,0 +1,33 @@
+# Travis CI script
+language: cpp
+sudo: false
+
+# Compilers to test.
+compiler:
+    - g++
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-6
+      - g++-6
+      - build-essential
+      - libtinyxml2-dev
+      - libasound2-dev
+      - pkg-config
+
+install:
+    # libexadrums
+    - git clone git://github.com/SpintroniK/libeXaDrums.git
+    - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=$HOME/local --exec_prefix=$HOME/local; make; make install; cd ..; rm -rf libexadrums)
+
+# Building libexadrums-tests
+script:
+    - export PATH=$PATH:$HOME/local/bin
+    - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/local/lib/pkgconfig
+    - autoreconf -fi && ./configure --prefix=$HOME/local --exec_prefix=$HOME/local && make && make install
+    - make check && make dist
+    - $HOME/local/bin/tests
+
