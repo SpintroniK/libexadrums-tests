@@ -1,6 +1,7 @@
 # Travis CI script
 language: cpp
 sudo: false
+dist: xenial
 
 # Compilers to test.
 compiler:
