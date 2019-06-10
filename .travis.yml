@@ -19,11 +19,13 @@ addons:
 
 install:
     # libexadrums
+    - export CXX="g++-7"
     - git clone git://github.com/SpintroniK/libeXaDrums.git
     - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=$HOME/local --exec_prefix=$HOME/local; make; make install; cd ..; rm -rf libexadrums)
 
 # Building libexadrums-tests
 script:
+    - export CXX="g++-7"
     - export PATH=$PATH:$HOME/local/bin
     - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/local/lib/pkgconfig
     - autoreconf -fi && ./configure --prefix=$HOME/local --exec_prefix=$HOME/local && make && make install
