@@ -18,6 +18,6 @@ TEST_CASE("eXaDrums construction")
     const auto error = exa.GetInitError();
     const auto message = std::string{error.message};
 
-    CHECK( message.empty() );
+    CHECK( message == "" );
     REQUIRE( error.type == Util::error_type_success );
 }

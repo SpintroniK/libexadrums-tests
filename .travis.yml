@@ -23,6 +23,8 @@ install:
     - export CXX="g++-7"
     - git clone git://github.com/SpintroniK/libeXaDrums.git
     - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=$HOME/local --exec_prefix=$HOME/local; make; make install; cd ..; rm -rf libexadrums)
+    - git clone git://github.com/SpintroniK/eXaDrums.git
+    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; rm -rf exadrums)
 
 # Building libexadrums-tests
 script:
