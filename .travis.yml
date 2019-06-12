@@ -13,6 +13,7 @@ before_install:
   - sudo apt-get remove --purge alsa-base pulseaudio
   - sudo apt-get install alsa-base pulseaudio
   - sudo alsa force-reload
+  - sudo apt-get remove --purge mysql* -y
   - sudo add-apt-repository ppa:ubuntu-audio-dev/alsa-daily -y
   - sudo apt-get update
   - sudo apt-get dist-upgrade -y
