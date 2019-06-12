@@ -10,10 +10,13 @@ compiler:
 before_install:
   - sudo apt-get update -qq
   - sudo usermod -a -G audio travis
-  - sudo apt-get install -y portaudio19-dev
-  - sudo apt-get install -y libasound2-dev alsa-utils alsa-oss
+  - sudo apt-get remove --purge alsa-base pulseaudio
+  - sudo apt-get install alsa-base pulseaudio
+  - sudo alsa force-reload
+  - sudo add-apt-repository ppa:ubuntu-audio-dev
+  - sudo apt-get update
+  - sudo apt-get dist-upgrade
   - sudo bash prep-dummy-soundcard.sh
-  - locate snd-dummy
   - sudo modprobe snd-dummy
 
 addons:
@@ -33,7 +36,7 @@ install:
     - git clone git://github.com/SpintroniK/libeXaDrums.git
     - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=$HOME/local --exec_prefix=$HOME/local; make; make install; cd ..; rm -rf libexadrums)
     - git clone git://github.com/SpintroniK/eXaDrums.git
-    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; cd .. ; rm -rf exadrums; sed -i 's/default/null/g' $HOME/.eXaDrums/Data/alsaConfig.xml)
+    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; cd .. ; rm -rf exadrums; sed -i 's/default/null/g' $HOME/.eXaDrums/Data/alsaConfig.xml; more $HOME/.eXaDrums/Data/alsaConfig.xml)
 
 env:
   global:
