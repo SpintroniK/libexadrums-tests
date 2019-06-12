@@ -1,7 +1,6 @@
 # Travis CI script
 language: cpp
 sudo: required
-dist: xenial
 
 # Compilers to test.
 compiler:
@@ -13,6 +12,7 @@ before_install:
   - sudo apt-get install -y portaudio19-dev
   - sudo apt-get install -y libasound2-dev alsa-utils alsa-oss
   - sudo bash prep-dummy-soundcard.sh
+  - sudo modprobe snd-dummy
 
 addons:
   apt:
@@ -31,7 +31,7 @@ install:
     - git clone git://github.com/SpintroniK/libeXaDrums.git
     - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=$HOME/local --exec_prefix=$HOME/local; make; make install; cd ..; rm -rf libexadrums)
     - git clone git://github.com/SpintroniK/eXaDrums.git
-    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; rm -rf exadrums)
+    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; cd .. ; rm -rf exadrums; sed -i 's/default/null/g' $HOME/.eXaDrums/Data/alsaConfig.xml)
 
 env:
   global:
