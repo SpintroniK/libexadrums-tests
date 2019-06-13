@@ -49,5 +49,5 @@ script:
     - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/local/lib/pkgconfig
     - autoreconf -fi && ./configure --prefix=$HOME/local --exec_prefix=$HOME/local && make && make install
     - make check && make dist
-    - sudo $HOME/local/bin/tests
+    - sudo -E $HOME/local/bin/tests
 
