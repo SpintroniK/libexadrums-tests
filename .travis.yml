@@ -46,5 +46,5 @@ script:
     - export CXX="g++-7"
     - autoreconf -fi && ./configure --prefix=$HOME/local --exec_prefix=$HOME/local && make && make install
     - make check && make dist
-    - sudo -E $HOME/local/bin/tests -s
+    - $HOME/local/bin/tests -s
 
