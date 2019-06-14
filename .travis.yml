@@ -33,7 +33,7 @@ install:
     - sudo dpkg -i libtinyxml2-dev_4.0.1-1_amd64.deb
     - export CXX="g++-7"
     - git clone git://github.com/SpintroniK/libeXaDrums.git
-    - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=/usr --exec_prefix=/usr; make; sudo make install; cd ..; rm -rf libexadrums)
+    - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=/usr --exec_prefix=/usr; make -j`nproc`; sudo make install; cd ..; rm -rf libexadrums)
     - git clone git://github.com/SpintroniK/eXaDrums.git
     - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; cd .. ; rm -rf exadrums; more $HOME/.eXaDrums/Data/alsaConfig.xml)
 
@@ -46,5 +46,5 @@ script:
     - export CXX="g++-7"
     - autoreconf -fi && ./configure --prefix=$HOME/local --exec_prefix=$HOME/local && make && make install
     - make check && make dist
-    - sudo -E $HOME/local/bin/tests
+    - sudo -E $HOME/local/bin/tests -s
 
