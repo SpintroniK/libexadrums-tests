@@ -12,11 +12,11 @@
 #include <iostream>
 
 #if __has_include(<filesystem>)
-	#include <filesystem>
-	namespace fs = std::filesystem;
+    #include <filesystem>
+    namespace fs = std::filesystem;
 #else
-	#include <experimental/filesystem>
-	namespace fs = std::experimental::filesystem;
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #endif
 
 using namespace std::string_literals;
@@ -94,16 +94,16 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
 
         REQUIRE(instrumentTypes.size() > 0);
 
-		kitCreator->CreateNewKit();
-		kitCreator->SetKitName("test_kit");
+        kitCreator->CreateNewKit();
+        kitCreator->SetKitName("test_kit");
 
         for(size_t i = 0; i < numInstrumentsToCreate; ++i)
         {
             std::string instrumentName = "Instrument " + std::to_string(i + 1);
             kitCreator->CreateNewInstrument();
-			kitCreator->SetInstrumentVolume(0.1f);
+            kitCreator->SetInstrumentVolume(0.1f);
 
-			REQUIRE_NOTHROW( kitCreator->SetInstrumentType(instType.c_str()) );
+            REQUIRE_NOTHROW( kitCreator->SetInstrumentType(instType.c_str()) );
             REQUIRE_NOTHROW( kitCreator->SetInstrumentName(instrumentName.c_str()) );    
             REQUIRE_NOTHROW( kitCreator->AddInstrumentSound("SnareDrum/Snr_Acou_01.wav", "DrumHead") );
             REQUIRE_NOTHROW( kitCreator->AddInstrumentTrigger(i, "DrumHead") );
@@ -115,12 +115,12 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
         // All instruments have been added, save kit.
         REQUIRE_NOTHROW( kitCreator->SaveKit() );
 
-		const auto oldKitsNames = exa.GetKitsNames();
+        const auto oldKitsNames = exa.GetKitsNames();
 
-		// Retrieve kits names
+        // Retrieve kits names
         REQUIRE_NOTHROW( exa.ReloadKits() );
 
-		const auto newkitsNames = exa.GetKitsNames();
+        const auto newkitsNames = exa.GetKitsNames();
 
         REQUIRE( oldKitsNames.size() + 1 == newkitsNames.size() );
 
@@ -161,7 +161,7 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
 
         REQUIRE_NOTHROW( exa.RecorderExport(configPath + "Rec/test.xml") );
 
-        REQUIRE( fs::exists("test.xml") );
+        REQUIRE( fs::exists(configPath + "Rec/test.xml") );
     }
 
     SECTION("Delete test kit")
