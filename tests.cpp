@@ -159,7 +159,7 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
         REQUIRE_NOTHROW( exa.Stop() );
         REQUIRE_NOTHROW( exa.EnableRecording(false) );
 
-        REQUIRE_NOTHROW( exa.RecorderExport("test.xml") );
+        REQUIRE_NOTHROW( exa.RecorderExport(configPath + "Rec/test.xml") );
 
         REQUIRE( fs::exists("test.xml") );
     }
