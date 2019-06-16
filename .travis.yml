@@ -35,7 +35,7 @@ install:
     - git clone git://github.com/SpintroniK/libeXaDrums.git
     - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=/usr --exec_prefix=/usr; make -j`nproc`; sudo make install; cd ..; rm -rf libexadrums)
     - git clone git://github.com/SpintroniK/eXaDrums.git
-    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/; cd .. ; rm -rf exadrums; sudo mkdir -p /usr/share/exadrums/Data/data/; sudo cp out.raw /usr/share/exadrums/Data/data/)
+    - (mv eXaDrums exadrums; cd exadrums; mkdir $HOME/.eXaDrums; cp -r Data/ $HOME/.eXaDrums/;  sudo mkdir -p /usr/share/exadrums/Data/data/; sudo cp out.raw /usr/share/exadrums/Data/data/; cd .. ; rm -rf exadrums)
 
 env:
   global:
