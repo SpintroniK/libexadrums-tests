@@ -16,6 +16,7 @@ before_install:
   - sudo alsa force-reload
   - sudo bash prep-dummy-soundcard.sh
   - sudo modprobe snd-dummy
+  - sudo apt install libtinyxml2-dev
 
 addons:
   apt:
@@ -30,10 +31,6 @@ addons:
 
 install:
     # libexadrums
-    - wget http://http.us.debian.org/debian/pool/main/t/tinyxml2/libtinyxml2-dev_4.0.1-1_amd64.deb
-    - wget http://http.us.debian.org/debian/pool/main/t/tinyxml2/libtinyxml2-4_4.0.1-1_amd64.deb
-    - sudo dpkg -i libtinyxml2-4_4.0.1-1_amd64.deb
-    - sudo dpkg -i libtinyxml2-dev_4.0.1-1_amd64.deb
     - export CXX="g++-7"
     - git clone git://github.com/SpintroniK/libeXaDrums.git
     - (mv libeXaDrums libexadrums; cd libexadrums; autoreconf -fi; ./configure --prefix=/usr --exec_prefix=/usr; make -j`nproc`; sudo make install; cd ..; rm -rf libexadrums)
