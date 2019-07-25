@@ -1,6 +1,6 @@
 # Travis CI script
 language: cpp
-dist: trusty
+dist: xenial
 sudo: required
 
 # Compilers to test.
@@ -8,7 +8,8 @@ compiler:
   - g++
 
 before_install:
-  - sudo apt-get update -qq
+  # https://askubuntu.com/questions/187502/how-do-i-use-apt-get-to-update-to-the-latest-kernel
+  - sudo apt install linux-modules-extra-`uname -r`
   - sudo usermod -a -G audio travis
   - sudo apt-get remove --purge alsa-base pulseaudio
   - sudo apt-get install alsa-base pulseaudio
@@ -25,6 +26,7 @@ addons:
       - build-essential
       - libasound2-dev
       - pkg-config
+    update: true
 
 install:
     # libexadrums
