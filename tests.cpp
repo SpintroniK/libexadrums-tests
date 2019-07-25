@@ -28,14 +28,17 @@ using namespace eXaDrumsApi;
 
 TEST_CASE("Check configuration files", "[config]")
 {
+
+    const auto configPath = std::getenv("HOME")+ "/.eXaDrums/Data/"s;
+
     SECTION("Check Data folder")
     {
 
     }
 
-    SECTION("Check for Hdd sensors data")
+    SECTION("Check Hdd sensors data")
     {
-
+        REQUIRE( fs::exists("/usr/share/exadrums/Data/data/out.raw") );
     }
 }
 
@@ -146,7 +149,7 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
         }
 
         REQUIRE_NOTHROW( kitCreator->SaveKit() );
-        REQUIRE( exa.GetNumKits() > 1);
+        REQUIRE( exa.GetNumKits() > 1 );
 
         // Select last kit (test kit)
         REQUIRE_NOTHROW( exa.SelectKit(exa.GetNumKits() - 1) );
@@ -162,6 +165,7 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
         REQUIRE_NOTHROW( exa.RecorderExport(configPath + "Rec/test.xml") );
 
         REQUIRE( fs::exists(configPath + "Rec/test.xml") );
+        CHECK( fs::remove(configPath + "Rec/test.xml") );
     }
 
     SECTION("Delete test kit")
