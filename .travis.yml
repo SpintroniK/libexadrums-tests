@@ -8,7 +8,7 @@ compiler:
   - g++
 
 before_install:
-  - sudo apt-get install linux-modules-extra-4.15.0-20-generic
+  - sudo apt-get install linux-modules-extra-4.15.0-20-generic linux-modules-4.15.0-1006-oem
   - sudo apt-get update -qq
   - sudo usermod -a -G audio travis
   - sudo apt-get remove --purge alsa-base pulseaudio
