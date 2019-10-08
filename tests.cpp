@@ -45,16 +45,21 @@ TEST_CASE("Check configuration files", "[config]")
 TEST_CASE("eXaDrums initialization test", "[init]")  
 {
 
-    const auto configPath = std::getenv("HOME")+ "/.eXaDrums/Data/"s;
-    INFO("Config path = " << configPath);
+    SECTION("Init test")
+    {
 
-    auto exa = eXaDrums{configPath.data()};
+        const auto configPath = std::getenv("HOME")+ "/.eXaDrums/Data/"s;
+        INFO("Config path = " << configPath);
 
-    const auto error = exa.GetInitError();
-    const auto message = std::string{error.message};
+        auto exa = eXaDrums{configPath.data()};
 
-    CHECK( message == "" );
-    REQUIRE( error.type == Util::error_type_success );
+        const auto error = exa.GetInitError();
+        const auto message = std::string{error.message};
+
+        CHECK( message == "" );
+        REQUIRE( error.type == Util::error_type_success );
+
+    }
 }
 
 TEST_CASE("eXaDrums drum kits tests", "[drumkit]") 
@@ -183,3 +188,19 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
     }
 
 }
+
+/*TEST_CASE("Import and export config tests", "[config]") 
+{
+    SECTION("test")
+    {
+        const auto home = std::getenv("HOME");
+        const auto configPath = home + "/.eXaDrums/Data/"s;
+        auto exa = eXaDrums{configPath.data()};
+
+        //Config::ExportConfig(home + "/.eXaDrums"s, "./test.zip");
+        //Config::ImportConfig("test.zip", "test_config");
+
+        //fs::remove("test.zip");
+        fs::remove_all("test_config");
+    }
+}*/
