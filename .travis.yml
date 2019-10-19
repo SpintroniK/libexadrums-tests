@@ -33,8 +33,8 @@ install:
     - (mv libeXaDrums "libexadrums-$OLD"; cp -r "libexadrums-$OLD" "libexadrums-$NEW")
     - (cd "libexadrums-$OLD"; git checkout "$OLD"; autoreconf -fi; ./configure CXXFLAGS=" -g -Og"; make -j`nproc`; cd ..)
     - (cd "libexadrums-$NEW"; git checkout "$BRANCH_PREFIX$NEW"; autoreconf -fi; ./configure CXXFLAGS=" -g -Og"; make -j`nproc`; cd ..)
-    - (cd "libexadrums-$OLD"; cp .libs/libexadrums.so.*.* "libexadrums-$OLD.so"; cd ..)
-    - (cd "libexadrums-$NEW"; cp .libs/libexadrums.so.*.* "libexadrums-$NEW.so"; cd ..)
+    - (cd "libexadrums-$OLD"; cp .libs/libexadrums.so.*.* "../libexadrums-$OLD.so"; cd ..)
+    - (cd "libexadrums-$NEW"; cp .libs/libexadrums.so.*.* "../libexadrums-$NEW.so"; cd ..)
 
 
 # Run abi compliance test
