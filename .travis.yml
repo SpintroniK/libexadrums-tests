@@ -16,7 +16,7 @@ before_install:
   - sudo alsa force-reload
   - sudo bash prep-dummy-soundcard.sh
   - sudo modprobe snd-dummy
-  - sudo apt install libtinyxml2-dev libasound2-dev
+  - sudo apt install libtinyxml2-dev libasound2-dev libminizip-dev
 
 addons:
   apt:
