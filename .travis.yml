@@ -1,0 +1,46 @@
+# Travis CI script
+language: cpp
+dist: bionic
+sudo: required
+
+# Test ABI compatibility between tag $OLD and branch $NEW
+env: OLD="0.4.2" NEW="0.5.0" BRANCH_PREFIX="dev/"
+
+# Compilers to test.
+compiler:
+  - g++
+
+before_install:
+  # https://askubuntu.com/questions/187502/how-do-i-use-apt-get-to-update-to-the-latest-kernel
+  - sudo apt install linux-modules-extra-`uname -r`
+  - sudo apt install libtinyxml2-dev libasound2-dev libminizip-dev
+  - sudo apt install abi-compliance-checker abi-dumper
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-7
+      - build-essential
+      - pkg-config
+    update: true
+
+install:
+    # libexadrums
+    - export CXX="g++-7"
+    - git clone git://github.com/SpintroniK/libeXaDrums.git
+    - (mv libeXaDrums "libexadrums-$OLD"; cp -r "libexadrums-$OLD" "libexadrums-$NEW")
+    - (cd "libexadrums-$OLD"; git checkout "$OLD"; autoreconf -fi; ./configure CXXFLAGS=" -g -Og"; make -j`nproc`; cd ..)
+    - (cd "libexadrums-$NEW"; git checkout "$BRANCH_PREFIX$NEW"; autoreconf -fi; ./configure CXXFLAGS=" -g -Og"; make -j`nproc`; cd ..)
+    - (cd "libexadrums-$OLD"; cp .libs/libexadrums.so.*.* "libexadrums-$OLD.so"; cd ..)
+    - (cd "libexadrums-$NEW"; cp .libs/libexadrums.so.*.* "libexadrums-$NEW.so"; cd ..)
+
+
+# Run abi compliance test
+script:
+    - export CXX="g++-7"
+    - abi-dumper "libexadrums-$OLD.so" -o "libexadrums-$OLD.dump" -lver "$OLD"
+    - abi-dumper "libexadrums-$NEW.so" -o "libexadrums-$NEW.dump" -lver "$NEW"
+    - abi-compliance-checker -ext -l LIBEXADRUMS -old "libexadrums-$OLD.dump" -new "libexadrums-$NEW.dump"
+
