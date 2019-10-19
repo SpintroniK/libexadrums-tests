@@ -17,11 +17,11 @@ AM_LDFLAGS = -Wl,--as-needed
 bin_PROGRAMS = tests
 
 tests_CXXFLAGS = $(AM_CXXFLAGS) \
-  $(alsa_CFLAGS) $(tinyxml2_CFLAGS) $(exadrums_CFLAGS) \
+  $(alsa_CFLAGS) $(tinyxml2_CFLAGS) $(minizip_CFLAGS) $(exadrums_CFLAGS) \
   -std=c++17
 tests_LDADD = $(AM_LDADD) \
   -lstdc++fs \
-  $(alsa_LIBS) $(tinyxml2_LIBS) $(exadrums_LIBS)
+  $(alsa_LIBS) $(tinyxml2_LIBS) $(minizip_LIBS) $(exadrums_LIBS)
 
 tests_SOURCES = \
   tests.cpp
