@@ -4,6 +4,7 @@
 #include "libexadrums/Api/eXaDrums.hpp"
 #include "libexadrums/Api/KitCreator/KitCreator_api.hpp"
 #include "libexadrums/Api/Config/Config_api.hpp"
+#include <libexadrums/Util/Xml.h>
 
 #include <string>
 #include <thread>
@@ -23,10 +24,36 @@ using namespace std::string_literals;
 using namespace std::chrono_literals;
 using namespace std::this_thread;
 using namespace Catch::Matchers;
+using namespace tinyxml2;
 using namespace eXaDrumsApi;
 
 
-TEST_CASE("Check configuration files", "[config]")
+TEST_CASE("Xml reader test", "[xml]")  
+{
+
+    SECTION("test")
+    {
+
+        const std::string fileName = "instrument.xml";
+
+		XMLDocument doc;
+
+		if(doc.LoadFile(fileName.c_str()) != XML_SUCCESS)
+		{
+			throw -1;
+		}
+
+		XMLElement* root = doc.RootElement();
+        XMLElement* instrument = root->FirstChildElement("Instrument");
+        for(const auto& e : Util::XmlElement{instrument})
+        {
+            std::cout << e.TagName() << std::endl;
+        }
+
+    }
+}
+
+/*TEST_CASE("Check configuration files", "[config]")
 {
 
     const auto configPath = std::getenv("HOME")+ "/.eXaDrums/Data/"s;
@@ -187,7 +214,7 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
         REQUIRE_NOTHROW( config.SaveSensorsConfig() );
     }
 
-}
+}*/
 
 /*TEST_CASE("Import and export config tests", "[config]") 
 {
