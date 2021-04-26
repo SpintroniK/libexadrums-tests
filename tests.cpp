@@ -142,37 +142,6 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
 
     }
 
-    SECTION("Recorder test")
-    {
-        REQUIRE_NOTHROW( kitCreator->CreateFromModel("test_kit.xml") );
-        const size_t nbInst = kitCreator->GetNumInstruments();
-
-        // Keep only one instrument
-        for(size_t i = 0; i < nbInst - 1; ++i)
-        {
-            kitCreator->RemoveLastInstrument();
-        }
-
-        REQUIRE_NOTHROW( kitCreator->SaveKit() );
-        REQUIRE( exa.GetNumKits() > 1 );
-
-        // Select last kit (test kit)
-        REQUIRE_NOTHROW( exa.SelectKit(exa.GetNumKits() - 1) );
-
-        REQUIRE_NOTHROW( exa.EnableRecording(true) );
-        REQUIRE_NOTHROW( exa.Start() );
-
-        sleep_for(5s);
-
-        REQUIRE_NOTHROW( exa.Stop() );
-        REQUIRE_NOTHROW( exa.EnableRecording(false) );
-
-        REQUIRE_NOTHROW( exa.RecorderExport(configPath + "Rec/test.xml") );
-
-        REQUIRE( fs::exists(configPath + "Rec/test.xml") );
-        CHECK( fs::remove(configPath + "Rec/test.xml") );
-    }
-
     SECTION("Delete test kit")
     {
         // Delete last kit
@@ -186,6 +155,54 @@ TEST_CASE("eXaDrums drum kits tests", "[drumkit]")
         REQUIRE_NOTHROW( config.SetSensorsType("Virtual"s) );
         REQUIRE_NOTHROW( config.SaveSensorsConfig() );
     }
+}
+
+TEST_CASE("eXaDrums recorder test", "[recorder]")
+{
+
+    const auto configPath = std::getenv("HOME")+ "/.eXaDrums/Data/"s;
+    auto exa = eXaDrums{configPath.data()};
+
+    // Make kit creator
+    std::string dataFolder(exa.GetDataLocation());
+    auto kitCreator = std::make_unique<KitCreator>(dataFolder.c_str());
+
+    // Make config manager
+    auto config = Config(exa);
+
+    SECTION("Sensors configuration")
+    {
+        REQUIRE_NOTHROW( config.LoadTriggersConfig() );
+        const auto sensorsTypes = config.GetSensorsTypes();
+
+
+        REQUIRE_THAT( sensorsTypes, VectorContains("Hdd"s) );
+        REQUIRE_NOTHROW( config.SetSensorsType("Hdd"s) );
+
+        REQUIRE_NOTHROW( config.SaveSensorsConfig() );
+    }
+
+    SECTION("Recorder test")
+    {
+
+        REQUIRE_NOTHROW( exa.EnableRecording(true) );
+        REQUIRE_NOTHROW( exa.Start() );
+        // REQUIRE_NOTHROW( exa.EnableMetronome(true) );
+
+        sleep_for(5s);
+
+        // REQUIRE_NOTHROW( exa.EnableMetronome(false) );
+        REQUIRE_NOTHROW( exa.Stop() );
+        REQUIRE_NOTHROW( exa.EnableRecording(false) );
+
+        REQUIRE_NOTHROW( exa.RecorderExport(configPath + "Rec/test.xml") );
+
+        REQUIRE_NOTHROW( exa.RecorderExportPCM(configPath + "Rec/test.wav") );
+
+        REQUIRE( fs::exists(configPath + "Rec/test.xml") );
+        CHECK( fs::remove(configPath + "Rec/test.xml") );
+    }
+
 
 }
 
