@@ -27,12 +27,183 @@ using namespace Catch::Matchers;
 using namespace tinyxml2;
 using namespace eXaDrumsApi;
 
+enum class NodeType
+{
+    Sound, 
+    Trigger,
+    AmplitudeModulator,
+    Output
+};
+
+class AbstractNode
+{
+public:
+    AbstractNode(const std::string& name, NodeType type): name{name}, type{type} {}
+
+    virtual bool IsLeaf() const  = 0;
+    virtual void Print() const = 0;
+
+    virtual void Compute() = 0;
+
+    std::string GetName() const { return name; }
+    virtual void SetPrecedence(size_t p) { precedence = p; }
+
+protected:
+
+    std::string name;
+    size_t precedence{0};
+    NodeType type{NodeType::Sound};
+};
+
+using AbstractNodePtr = std::shared_ptr<AbstractNode>;
+
+class Node : public AbstractNode
+{
+public:
+    Node(const std::string& name, NodeType type) : AbstractNode(name, type) {}
+    
+
+    void AddChild(AbstractNodePtr node)
+    {
+        childs.emplace_back(node);
+    }
+
+    virtual bool IsLeaf() const final { return false; }
+
+    const std::vector<AbstractNodePtr>& GetChilds() const { return childs; }
+    AbstractNodePtr GetChild(size_t i) const { return childs[i]; }
+    auto GetNumChilds() const { return childs.size(); }
+
+
+    virtual void Compute() override {}
+    virtual void Print() const override
+    {
+        std::cout << std::string(precedence, ' ') << name << ": " << std::endl;
+        for(const auto& child : childs)
+        {
+            child->Print();
+        }
+    }
+
+private:
+
+    std::vector<AbstractNodePtr> childs;
+
+};
+
+class Input : public AbstractNode
+{
+public:
+    Input(const std::string& name, NodeType type) : AbstractNode(name, type) {}
+    
+
+    virtual bool IsLeaf() const final { return true; }
+    virtual void Compute() override {}
+    virtual void Print() const override
+    {
+        std::cout << std::string(precedence, ' ') << name << std::endl;
+    }
+};
+
+
+class SoundNode : public Node
+{
+public:
+    SoundNode(const std::string& name, const Util::XmlElement& element) : Node(name, NodeType::Sound) 
+    {
+        fileLocation = std::string{element.GetText()};
+        soundType = element.Attribute<std::string>("type");
+    }
+
+private:
+
+    std::string fileLocation;
+    std::string soundType;
+
+};
+
+using TriggerNode = Input;
+using AmplitudeModulator = Node;
+using Output = Node;
+
+AbstractNodePtr makeNode(const std::string& name, const std::string& type, const Util::XmlElement& element)
+{
+    if(type == "Sound")
+    {
+        return std::make_shared<SoundNode>(name, element);
+    }
+
+    if(type == "Trigger")
+    {
+        return std::make_shared<TriggerNode>(name, NodeType::Trigger);
+    }
+
+    if(type == "AmplitudeModulator")
+    {
+        return std::make_shared<AmplitudeModulator>(name, NodeType::AmplitudeModulator);
+    }
+
+    if(type == "Output")
+    {
+        return std::make_shared<Output>(name, NodeType::Output);
+    }
+    throw "Error";
+}
+
+
+void interpret(const Util::XmlElement& e, size_t& i, AbstractNodePtr node)
+{
+
+    Node* currentNode = dynamic_cast<Node*>(node.get());
+    const auto name = e.TagName();
+
+    if(!e.HasChildren())
+    {
+        const auto type = e.Attribute<std::string>("class");
+        std::cout << "Leaf: " << std::string(i, ' ') << " " << type << std::endl;
+
+        currentNode->AddChild(makeNode(type, type, e));
+        currentNode->GetChilds().back()->SetPrecedence(i);
+        return;
+    }
+
+    if(i != 0)
+    {
+        const auto type = e.Attribute<std::string>("class");
+        std::cout << "Node: " << std::string(i, ' ') << " " << type << std::endl;
+
+        currentNode->AddChild(makeNode(type, type, e));
+        currentNode->GetChilds().back()->SetPrecedence(i);
+    }
+
+
+    i++;
+    for(const auto& s : Util::XmlElement{e})
+    {
+
+        if(!node->IsLeaf() && i != 1)
+        {            
+            node = currentNode->GetChilds().back();
+        }
+
+        interpret(s, i, node);
+    }
+    i--;
+}
 
 TEST_CASE("Xml reader test", "[xml]")  
 {
 
     SECTION("test")
     {
+
+
+        const auto configPath = std::getenv("HOME")+ "/.eXaDrums/Data/"s;
+        INFO("Config path = " << configPath);
+
+        auto exa = eXaDrums{configPath.data()};
+
+        std::cout << exa.GetVersion() << std::endl;
 
         const std::string fileName = "instrument.xml";
 
@@ -44,11 +215,19 @@ TEST_CASE("Xml reader test", "[xml]")
 		}
 
 		XMLElement* root = doc.RootElement();
-        XMLElement* instrument = root->FirstChildElement("Instrument");
-        for(const auto& e : Util::XmlElement{instrument})
-        {
-            std::cout << e.TagName() << std::endl;
-        }
+        XMLElement* instrumentRoot = root->FirstChildElement("Instrument");
+        const auto instrument = Util::XmlElement{instrumentRoot};
+
+        std::cout << "Instrument name = " << instrument.Attribute<std::string>("name") << std::endl;
+        size_t i = 0;
+
+        auto rootNode = makeNode("root", "Output", Util::XmlElement{nullptr});
+
+        interpret(instrument, i, rootNode);
+
+        auto node = dynamic_cast<Node*>(rootNode.get());
+
+        node->Print();
 
     }
 }

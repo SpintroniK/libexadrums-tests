@@ -1,25 +1,8 @@
 <root>
-    <Instrument type="Pad" volume="100">
-        <instrumentName>Test</instrumentName>
-        <triggers>
-            <trigger location="DrumHead" index="0">0</trigger>
-        </triggers>
-        <sounds>
-            <sound type="DrumHead" index="0">HiHat/HiHat.wav</sound>
-        </sounds>
-        <Operations>
-            <operation name="hi-hatify">
-                <params>
-                    <param type="value" index="0" value="8"></param>
-                </params>
-                <inputs>
-                    <input type="sound" index="0"></input>
-                    <input type="trigger" index="0"></input>
-                </inputs>
-                <outputs>
-                    
-                </outputs>
-            </operation>
-        </Operations>
+    <Instrument volume="100" name="Test">
+        <Node class="AmplitudeModulator">
+            <Node class="Trigger" location="DrumHead">0</Node>
+            <Node class="Sound" type="DrumHead">HiHat/HiHat.wav</Node>
+        </Node>
     </Instrument>
 </root>
