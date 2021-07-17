@@ -11,6 +11,8 @@
 #include <chrono>
 #include <memory>
 #include <iostream>
+#include <stack>
+#include <map>
 
 #if __has_include(<filesystem>)
     #include <filesystem>
@@ -27,7 +29,7 @@ using namespace Catch::Matchers;
 using namespace tinyxml2;
 using namespace eXaDrumsApi;
 
-enum class NodeType
+enum class OperationType
 {
     Sound, 
     Trigger,
@@ -35,84 +37,104 @@ enum class NodeType
     Output
 };
 
-class AbstractNode
+class Operation
 {
 public:
-    AbstractNode(const std::string& name, NodeType type): name{name}, type{type} {}
+    Operation(OperationType type): type{type} {}
+    virtual ~Operation() = default;
 
-    virtual bool IsLeaf() const  = 0;
-    virtual void Print() const = 0;
-
+    virtual bool IsInput() const  = 0;
     virtual void Compute() = 0;
 
-    std::string GetName() const { return name; }
-    virtual void SetPrecedence(size_t p) { precedence = p; }
 
 protected:
-
-    std::string name;
-    size_t precedence{0};
-    NodeType type{NodeType::Sound};
+    OperationType type{OperationType::Sound};
 };
 
-using AbstractNodePtr = std::shared_ptr<AbstractNode>;
+using OperationPtr = std::shared_ptr<Operation>;
 
-class Node : public AbstractNode
+class Input : public Operation
 {
 public:
-    Node(const std::string& name, NodeType type) : AbstractNode(name, type) {}
+    Input(OperationType type) : Operation(type) {}
     
 
-    void AddChild(AbstractNodePtr node)
+    virtual bool IsInput() const final { return true; }
+    virtual void Compute() override {}
+};
+
+
+class UnaryOp : public Operation
+{
+public:
+
+    UnaryOp(std::stack<Operation*>& opStack, OperationType type) : Operation(type)
     {
-        childs.emplace_back(node);
+        child = opStack.top();
+        opStack.pop();
     }
 
-    virtual bool IsLeaf() const final { return false; }
+    UnaryOp(Operation* op, OperationType type) : Operation(type), child{op} {}
 
-    const std::vector<AbstractNodePtr>& GetChilds() const { return childs; }
-    AbstractNodePtr GetChild(size_t i) const { return childs[i]; }
-    auto GetNumChilds() const { return childs.size(); }
+    ~UnaryOp() 
+    { 
+         delete child; 
+    }
 
+    void SetChild(Operation* node)
+    {
+        child = node;
+    }
+
+    virtual bool IsInput() const final { return false; }
+
+    Operation* GetChilds() const { return child; }
 
     virtual void Compute() override {}
-    virtual void Print() const override
-    {
-        std::cout << std::string(precedence, ' ') << name << ": " << std::endl;
-        for(const auto& child : childs)
-        {
-            child->Print();
-        }
-    }
 
 private:
 
-    std::vector<AbstractNodePtr> childs;
+    Operation* child;
 
 };
 
-class Input : public AbstractNode
+
+class BinaryOp : public Operation
 {
 public:
-    Input(const std::string& name, NodeType type) : AbstractNode(name, type) {}
-    
 
-    virtual bool IsLeaf() const final { return true; }
-    virtual void Compute() override {}
-    virtual void Print() const override
+    BinaryOp(std::stack<Operation*>& opStack, OperationType type) : Operation(type)
     {
-        std::cout << std::string(precedence, ' ') << name << std::endl;
+        op1 = opStack.top();
+        opStack.pop();
+        op2 = opStack.top();
+        opStack.pop();
     }
+
+    BinaryOp(Operation* op1, Operation* op2, OperationType type) : Operation(type) {}
+
+    ~BinaryOp()
+    {
+        delete op1;
+        delete op2;
+    }
+
+    virtual bool IsInput() const final { return false; }
+    virtual void Compute() override {}
+
+
+private:
+
+    Operation* op1{nullptr};
+    Operation* op2{nullptr};
+
 };
 
-
-class SoundNode : public Node
+class SoundInput : public Input
 {
 public:
-    SoundNode(const std::string& name, const Util::XmlElement& element) : Node(name, NodeType::Sound) 
+    SoundInput() : Input(OperationType::Sound) 
     {
-        fileLocation = std::string{element.GetText()};
-        soundType = element.Attribute<std::string>("type");
     }
 
 private:
@@ -122,74 +144,123 @@ private:
 
 };
 
-using TriggerNode = Input;
-using AmplitudeModulator = Node;
-using Output = Node;
 
-AbstractNodePtr makeNode(const std::string& name, const std::string& type, const Util::XmlElement& element)
+class TriggerInput : public Input
 {
-    if(type == "Sound")
+public:
+    TriggerInput() : Input(OperationType::Trigger)
     {
-        return std::make_shared<SoundNode>(name, element);
+
     }
 
-    if(type == "Trigger")
-    {
-        return std::make_shared<TriggerNode>(name, NodeType::Trigger);
-    }
+private:
 
-    if(type == "AmplitudeModulator")
-    {
-        return std::make_shared<AmplitudeModulator>(name, NodeType::AmplitudeModulator);
-    }
-
-    if(type == "Output")
-    {
-        return std::make_shared<Output>(name, NodeType::Output);
-    }
-    throw "Error";
-}
+};
 
 
-void interpret(const Util::XmlElement& e, size_t& i, AbstractNodePtr node)
+using AmplitudeModulator = BinaryOp;
+using Output = UnaryOp;
+
+
+
+class OperationFactory
 {
 
-    Node* currentNode = dynamic_cast<Node*>(node.get());
-    const auto name = e.TagName();
+public:
 
-    if(!e.HasChildren())
+    OperationFactory() : operationMap{}
     {
-        const auto type = e.Attribute<std::string>("class");
-        std::cout << "Leaf: " << std::string(i, ' ') << " " << type << std::endl;
+        operationMap["Sound"] = &OperationFactory::MakeSound;
+        operationMap["Trigger"] = &OperationFactory::MakeTrigger;
+        operationMap["AmplitudeModulator"] = &OperationFactory::MakeAmplitudeModulator;
+    }
+    
+    ~OperationFactory() = default;
 
-        currentNode->AddChild(makeNode(type, type, e));
-        currentNode->GetChilds().back()->SetPrecedence(i);
-        return;
+    Operation* MakeOperation(const std::string& opName, std::stack<Operation*>& opStack) const
+    {
+       auto iter = operationMap.find(opName);
+       if(iter != operationMap.end())
+       {
+           return (this->*iter->second)(opStack);
+       }
+
+       return nullptr;
     }
 
-    if(i != 0)
+    Operation* MakeSound(std::stack<Operation*>&) const
     {
-        const auto type = e.Attribute<std::string>("class");
-        std::cout << "Node: " << std::string(i, ' ') << " " << type << std::endl;
-
-        currentNode->AddChild(makeNode(type, type, e));
-        currentNode->GetChilds().back()->SetPrecedence(i);
+        return new SoundInput();
     }
 
+    Operation* MakeTrigger(std::stack<Operation*>&) const
+    {
+        return new TriggerInput();
+    }
 
-    i++;
-    for(const auto& s : Util::XmlElement{e})
+    Operation* MakeAmplitudeModulator(std::stack<Operation*>& opStack) const
+    {
+        return new AmplitudeModulator(opStack, OperationType::AmplitudeModulator);
+    }
+
+private:
+
+    using FactoryPtmf = Operation*(OperationFactory::*)(std::stack<Operation*>&) const;
+    using OperationMap = std::map<std::string, FactoryPtmf>;
+
+    OperationMap operationMap;
+
+};
+
+
+OperationFactory operationFactory;
+
+
+class Interpreter
+{
+
+public:
+    Interpreter() = default;
+    ~Interpreter() = default;
+
+    Operation* Interpret(const Util::XmlElement& root)
     {
 
-        if(!node->IsLeaf() && i != 1)
-        {            
-            node = currentNode->GetChilds().back();
+        for(const auto& e : root)
+        {
+            std::cout << e.TagName() << " / " << e.Attribute<std::string>("class") << std::endl;
+            Operation* op = Parse(e);
+            return op;
         }
 
-        interpret(s, i, node);
+        return nullptr;
     }
-    i--;
-}
+
+private:
+
+    Operation* Parse(const Util::XmlElement& e, bool isRoot = true)
+    {
+        for(const auto& se : e)
+        {
+            const auto type = se.Attribute<std::string>("class");
+            std::cout << se.TagName() << " / " << type << std::endl;
+
+            Parse(se, false);
+
+            Operation* subOp = operationFactory.MakeOperation(type, operationStack);
+            operationStack.push(subOp);
+        }
+
+        if(!isRoot)
+            return nullptr;
+
+        return operationFactory.MakeOperation(e.Attribute<std::string>("class"), operationStack);
+    }
+
+    std::stack<Operation*> operationStack;
+
+};
+
 
 TEST_CASE("Xml reader test", "[xml]")  
 {
@@ -219,15 +290,22 @@ TEST_CASE("Xml reader test", "[xml]")
         const auto instrument = Util::XmlElement{instrumentRoot};
 
         std::cout << "Instrument name = " << instrument.Attribute<std::string>("name") << std::endl;
-        size_t i = 0;
 
-        auto rootNode = makeNode("root", "Output", Util::XmlElement{nullptr});
+        Interpreter interpreter;
 
-        interpret(instrument, i, rootNode);
+        auto OpTree = std::unique_ptr<Operation>(interpreter.Interpret(instrument));
 
-        auto node = dynamic_cast<Node*>(rootNode.get());
+        std::cout << OpTree.get() << std::endl;
 
-        node->Print();
+        // size_t i = 0;
+
+        // auto rootNode = makeNode("root", "Output", Util::XmlElement{nullptr});
+
+        // interpret(instrument, i, rootNode);
+
+        // auto node = dynamic_cast<UnaryOp*>(rootNode.get());
+
+        // node->Print();
 
     }
 }
