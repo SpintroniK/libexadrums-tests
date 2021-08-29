@@ -14,6 +14,8 @@
 #include <stack>
 #include <map>
 
+using namespace std::string_literals;
+
 #if __has_include(<filesystem>)
     #include <filesystem>
     namespace fs = std::filesystem;
@@ -29,26 +31,16 @@ using namespace Catch::Matchers;
 using namespace tinyxml2;
 using namespace eXaDrumsApi;
 
-enum class OperationType
-{
-    Sound, 
-    Trigger,
-    AmplitudeModulator,
-    Output
-};
 
 class Operation
 {
 public:
-    Operation(OperationType type): type{type} {}
+    Operation() = default;
     virtual ~Operation() = default;
 
     virtual bool IsInput() const  = 0;
-    virtual void Compute() = 0;
+    virtual std::string Compute() = 0;
 
-
-protected:
-    OperationType type{OperationType::Sound};
 };
 
 using OperationPtr = std::shared_ptr<Operation>;
@@ -56,11 +48,11 @@ using OperationPtr = std::shared_ptr<Operation>;
 class Input : public Operation
 {
 public:
-    Input(OperationType type) : Operation(type) {}
+    Input() : Operation() {}
+    virtual ~Input() = default;
     
 
     virtual bool IsInput() const final { return true; }
-    virtual void Compute() override {}
 };
 
 
@@ -68,15 +60,15 @@ class UnaryOp : public Operation
 {
 public:
 
-    UnaryOp(std::stack<Operation*>& opStack, OperationType type) : Operation(type)
+    UnaryOp(std::stack<Operation*>& opStack) : Operation()
     {
         child = opStack.top();
         opStack.pop();
     }
 
-    UnaryOp(Operation* op, OperationType type) : Operation(type), child{op} {}
+    UnaryOp(Operation* op) : Operation(), child{op} {}
 
-    ~UnaryOp() 
+    virtual ~UnaryOp() 
     { 
          delete child; 
     }
@@ -88,11 +80,10 @@ public:
 
     virtual bool IsInput() const final { return false; }
 
-    Operation* GetChilds() const { return child; }
+    Operation* GetChild() const { return child; }
 
-    virtual void Compute() override {}
 
-private:
+protected:
 
     Operation* child;
 
@@ -103,7 +94,7 @@ class BinaryOp : public Operation
 {
 public:
 
-    BinaryOp(std::stack<Operation*>& opStack, OperationType type) : Operation(type)
+    BinaryOp(std::stack<Operation*>& opStack) : Operation()
     {
         op1 = opStack.top();
         opStack.pop();
@@ -111,31 +102,34 @@ public:
         opStack.pop();
     }
 
-    BinaryOp(Operation* op1, Operation* op2, OperationType type) : Operation(type) {}
+    BinaryOp(Operation* op1, Operation* op2) : Operation() {}
 
-    ~BinaryOp()
+    virtual ~BinaryOp()
     {
         delete op1;
         delete op2;
     }
 
     virtual bool IsInput() const final { return false; }
-    virtual void Compute() override {}
 
 
-private:
+protected:
 
     Operation* op1{nullptr};
     Operation* op2{nullptr};
 
 };
 
-class SoundInput : public Input
+class SoundInput final : public Input
 {
 public:
-    SoundInput() : Input(OperationType::Sound) 
+    SoundInput() : Input() 
     {
     }
+
+    virtual ~SoundInput() = default;
+
+    virtual std::string Compute() final { return "Sound"; }
 
 private:
 
@@ -145,22 +139,37 @@ private:
 };
 
 
-class TriggerInput : public Input
+class TriggerInput final : public Input
 {
 public:
-    TriggerInput() : Input(OperationType::Trigger)
+    TriggerInput() : Input()
     {
 
     }
+
+    virtual ~TriggerInput() = default;
+
+    virtual std::string Compute() final { return "Trigger"; }
 
 private:
 
 };
 
 
-using AmplitudeModulator = BinaryOp;
-using Output = UnaryOp;
+class AmplitudeModulator final : public BinaryOp
+{
+public:
 
+    AmplitudeModulator(std::stack<Operation*>& opStack) : BinaryOp(opStack)
+    {
+
+    }
+
+    virtual ~AmplitudeModulator() = default;
+
+    virtual std::string Compute() final { return "AmplitudeModulator \n[\n\t"s + op1->Compute() + " | "s + op2->Compute() + "\n]"s; }
+
+};
 
 
 class OperationFactory
@@ -200,7 +209,7 @@ public:
 
     Operation* MakeAmplitudeModulator(std::stack<Operation*>& opStack) const
     {
-        return new AmplitudeModulator(opStack, OperationType::AmplitudeModulator);
+        return new AmplitudeModulator(opStack);
     }
 
 private:
@@ -295,7 +304,7 @@ TEST_CASE("Xml reader test", "[xml]")
 
         auto OpTree = std::unique_ptr<Operation>(interpreter.Interpret(instrument));
 
-        std::cout << OpTree.get() << std::endl;
+        std::cout << OpTree->Compute() << std::endl;
 
         // size_t i = 0;
 
