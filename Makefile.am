@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
-# Copyright (C) 2018-2019 Jérémy Oden <jerem.oden@gmail.com>
-# Copyright (C) 2018-2019 Nicolas Boulenguez <nicolas@debian.org>
+# Copyright (C) 2018-2021 Jérémy Oden <jerem.oden@gmail.com>
+# Copyright (C) 2018-2021 Nicolas Boulenguez <nicolas@debian.org>
 
 # Cache shared with autoconf.
 ACLOCAL_AMFLAGS = -I m4
@@ -24,4 +24,8 @@ tests_LDADD = $(AM_LDADD) \
   $(alsa_LIBS) $(tinyxml2_LIBS) $(minizip_LIBS) $(exadrums_LIBS)
 
 tests_SOURCES = \
+  helpers/Operation.cpp \
+  helpers/Operation.h \
+  helpers/Visitor.cpp \
+  helpers/Visitor.h \
   tests.cpp

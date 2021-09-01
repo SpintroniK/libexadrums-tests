@@ -8,7 +8,7 @@ AC_INIT([libexadrums-tests],
         [0.4.0],
         [Jérémy Oden <jerem.oden@gmail.com>],
         [],
-        [http://www.freewebmaster.fr])
+        [https://exadrums.com])
 AC_CONFIG_SRCDIR([])
 AC_PROG_CXX
 AC_CONFIG_MACRO_DIRS([m4])

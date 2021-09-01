@@ -1,6 +1,9 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
 
+#include "helpers/Operation.h"
+#include "helpers/Visitor.h"
+
 #include "libexadrums/Api/eXaDrums.hpp"
 #include "libexadrums/Api/KitCreator/KitCreator_api.hpp"
 #include "libexadrums/Api/Config/Config_api.hpp"
@@ -32,145 +35,6 @@ using namespace tinyxml2;
 using namespace eXaDrumsApi;
 
 
-class Operation
-{
-public:
-    Operation() = default;
-    virtual ~Operation() = default;
-
-    virtual bool IsInput() const  = 0;
-    virtual std::string Compute() = 0;
-
-};
-
-using OperationPtr = std::shared_ptr<Operation>;
-
-class Input : public Operation
-{
-public:
-    Input() : Operation() {}
-    virtual ~Input() = default;
-    
-
-    virtual bool IsInput() const final { return true; }
-};
-
-
-class UnaryOp : public Operation
-{
-public:
-
-    UnaryOp(std::stack<Operation*>& opStack) : Operation()
-    {
-        child = opStack.top();
-        opStack.pop();
-    }
-
-    UnaryOp(Operation* op) : Operation(), child{op} {}
-
-    virtual ~UnaryOp() 
-    { 
-         delete child; 
-    }
-
-    void SetChild(Operation* node)
-    {
-        child = node;
-    }
-
-    virtual bool IsInput() const final { return false; }
-
-    Operation* GetChild() const { return child; }
-
-
-protected:
-
-    Operation* child;
-
-};
-
-
-class BinaryOp : public Operation
-{
-public:
-
-    BinaryOp(std::stack<Operation*>& opStack) : Operation()
-    {
-        op1 = opStack.top();
-        opStack.pop();
-        op2 = opStack.top();
-        opStack.pop();
-    }
-
-    BinaryOp(Operation* op1, Operation* op2) : Operation() {}
-
-    virtual ~BinaryOp()
-    {
-        delete op1;
-        delete op2;
-    }
-
-    virtual bool IsInput() const final { return false; }
-
-
-protected:
-
-    Operation* op1{nullptr};
-    Operation* op2{nullptr};
-
-};
-
-class SoundInput final : public Input
-{
-public:
-    SoundInput() : Input() 
-    {
-    }
-
-    virtual ~SoundInput() = default;
-
-    virtual std::string Compute() final { return "Sound"; }
-
-private:
-
-    std::string fileLocation;
-    std::string soundType;
-
-};
-
-
-class TriggerInput final : public Input
-{
-public:
-    TriggerInput() : Input()
-    {
-
-    }
-
-    virtual ~TriggerInput() = default;
-
-    virtual std::string Compute() final { return "Trigger"; }
-
-private:
-
-};
-
-
-class AmplitudeModulator final : public BinaryOp
-{
-public:
-
-    AmplitudeModulator(std::stack<Operation*>& opStack) : BinaryOp(opStack)
-    {
-
-    }
-
-    virtual ~AmplitudeModulator() = default;
-
-    virtual std::string Compute() final { return "AmplitudeModulator \n[\n\t"s + op1->Compute() + " | "s + op2->Compute() + "\n]"s; }
-
-};
-
 
 class OperationFactory
 {
@@ -191,30 +55,30 @@ public:
        auto iter = operationMap.find(opName);
        if(iter != operationMap.end())
        {
-           return (this->*iter->second)(opStack);
+           return (this->*iter->second)(opName, opStack);
        }
 
        return nullptr;
     }
 
-    Operation* MakeSound(std::stack<Operation*>&) const
+    Operation* MakeSound(const std::string& name, std::stack<Operation*>&) const
     {
-        return new SoundInput();
+        return new SoundInput(name);
     }
 
-    Operation* MakeTrigger(std::stack<Operation*>&) const
+    Operation* MakeTrigger(const std::string& name, std::stack<Operation*>&) const
     {
-        return new TriggerInput();
+        return new TriggerInput(name);
     }
 
-    Operation* MakeAmplitudeModulator(std::stack<Operation*>& opStack) const
+    Operation* MakeAmplitudeModulator(const std::string& name, std::stack<Operation*>& opStack) const
     {
-        return new AmplitudeModulator(opStack);
+        return new AmplitudeModulator(name, opStack);
     }
 
 private:
 
-    using FactoryPtmf = Operation*(OperationFactory::*)(std::stack<Operation*>&) const;
+    using FactoryPtmf = Operation*(OperationFactory::*)(const std::string&, std::stack<Operation*>&) const;
     using OperationMap = std::map<std::string, FactoryPtmf>;
 
     OperationMap operationMap;
@@ -305,6 +169,10 @@ TEST_CASE("Xml reader test", "[xml]")
         auto OpTree = std::unique_ptr<Operation>(interpreter.Interpret(instrument));
 
         std::cout << OpTree->Compute() << std::endl;
+
+        auto visitor = std::make_unique<OpTreePrinter>();
+
+        OpTree->Accept(*visitor);
 
         // size_t i = 0;
 
