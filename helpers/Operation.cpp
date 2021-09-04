@@ -9,21 +9,6 @@ UnaryOp::UnaryOp(const std::string& name, std::stack<Operation*>& opStack)
 }
 
 
-void Input::Accept(OpVisitor& v) 
-{ 
-    v.Visit(*this); 
-}
-
-void UnaryOp::Accept(OpVisitor& v)
-{
-    v.Visit(*this);
-}
-
-void BinaryOp::Accept(OpVisitor& v)
-{
-    v.Visit(*this);
-}
-
 void SoundInput::Accept(OpVisitor& v)
 {
     v.Visit(*this);

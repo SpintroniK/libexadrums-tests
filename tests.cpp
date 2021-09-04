@@ -101,7 +101,7 @@ public:
 
         for(const auto& e : root)
         {
-            std::cout << e.TagName() << " / " << e.Attribute<std::string>("class") << std::endl;
+            // std::cout << e.TagName() << " / " << e.Attribute<std::string>("class") << std::endl;
             Operation* op = Parse(e);
             return op;
         }
@@ -116,7 +116,7 @@ private:
         for(const auto& se : e)
         {
             const auto type = se.Attribute<std::string>("class");
-            std::cout << se.TagName() << " / " << type << std::endl;
+            // std::cout << se.TagName() << " / " << type << std::endl;
 
             Parse(se, false);
 
@@ -162,13 +162,9 @@ TEST_CASE("Xml reader test", "[xml]")
         XMLElement* instrumentRoot = root->FirstChildElement("Instrument");
         const auto instrument = Util::XmlElement{instrumentRoot};
 
-        std::cout << "Instrument name = " << instrument.Attribute<std::string>("name") << std::endl;
-
         Interpreter interpreter;
 
         auto OpTree = std::unique_ptr<Operation>(interpreter.Interpret(instrument));
-
-        std::cout << OpTree->Compute() << std::endl;
 
         auto visitor = std::make_unique<OpTreePrinter>();
 

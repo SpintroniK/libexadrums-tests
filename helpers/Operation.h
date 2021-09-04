@@ -15,7 +15,6 @@ public:
     virtual ~Operation() = default;
 
     virtual bool IsInput() const  = 0;
-    virtual std::string Compute() = 0;
     virtual std::string GetName() const { return name; }
     virtual void Accept(OpVisitor& v) = 0;
 
@@ -33,7 +32,6 @@ public:
     
 
     virtual bool IsInput() const final { return true; }
-    virtual void Accept(OpVisitor& v) override;
 };
 
 
@@ -56,7 +54,6 @@ public:
     }
 
     virtual bool IsInput() const final { return false; }
-    virtual void Accept(OpVisitor& v) override;
 
     Operation* GetChild() const { return child; }
 
@@ -90,7 +87,6 @@ public:
     }
 
     virtual bool IsInput() const final { return false; }
-    virtual void Accept(OpVisitor& v) override;
 
     auto GetOp1() const { return op1; }
     auto GetOp2() const { return op2; }
@@ -113,7 +109,6 @@ public:
 
     virtual ~SoundInput() = default;
 
-    virtual std::string Compute() final { return "Sound"; }
     virtual void Accept(OpVisitor& v) override;
 
 private:
@@ -134,7 +129,6 @@ public:
 
     virtual ~TriggerInput() = default;
 
-    virtual std::string Compute() final { return "Trigger"; }
     virtual void Accept(OpVisitor& v) override;
 
 private:
@@ -152,9 +146,6 @@ public:
     }
 
     virtual ~AmplitudeModulator() = default;
-
-    virtual std::string Compute() final { return "AmplitudeModulator \n[\n\t"s + op1->Compute() + " | "s + op2->Compute() + "\n]"s; }
-
     virtual void Accept(OpVisitor& v) override;
 };
 
