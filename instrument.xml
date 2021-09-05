@@ -1,8 +1,8 @@
 <root>
-    <Instrument volume="100" name="Test">
+    <Instrument type="Pad">
         <Node class="AmplitudeModulator">
-            <Node class="Trigger" location="DrumHead">0</Node>
-            <Node class="Sound" type="DrumHead">HiHat/HiHat.wav</Node>
+            <Node class="Trigger" location="Default"></Node>
+            <Node class="Sound" type="Default"></Node>
         </Node>
     </Instrument>
 </root>

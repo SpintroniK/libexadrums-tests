@@ -3,12 +3,10 @@
 #include "Visitor.h"
 
 #include <string>
-#include <memory>
 #include <stack>
 
-using namespace std::string_literals;
 
-class Operation
+class Operation : public Visitable<OpVisitor>
 {
 public:
     Operation(const std::string& name) : name{name} {};
@@ -16,7 +14,6 @@ public:
 
     virtual bool IsInput() const  = 0;
     virtual std::string GetName() const { return name; }
-    virtual void Accept(OpVisitor& v) = 0;
 
 private:
 
@@ -24,15 +21,6 @@ private:
 
 };
 
-class Input : public Operation
-{
-public:
-    Input(const std::string& name) : Operation(name) {}
-    virtual ~Input() = default;
-    
-
-    virtual bool IsInput() const final { return true; }
-};
 
 
 class UnaryOp : public Operation
@@ -100,16 +88,21 @@ protected:
 };
 
 
-class SoundInput final : public Input
+class SoundInput final : public Operation
 {
 public:
-    SoundInput(const std::string& name) : Input(name) 
+    SoundInput(const std::string& name) : Operation(name) 
     {
     }
 
     virtual ~SoundInput() = default;
 
-    virtual void Accept(OpVisitor& v) override;
+    virtual bool IsInput() const { return true; }
+
+    void Accept(OpVisitor& v)
+    {
+        v.Visit(*this);
+    }
 
 private:
 
@@ -119,17 +112,21 @@ private:
 };
 
 
-class TriggerInput final : public Input
+class TriggerInput final : public Operation
 {
 public:
-    TriggerInput(const std::string& name) : Input(name)
+    TriggerInput(const std::string& name) : Operation(name)
     {
 
     }
 
     virtual ~TriggerInput() = default;
+    virtual bool IsInput() const { return true; }
 
-    virtual void Accept(OpVisitor& v) override;
+    void Accept(OpVisitor& v)
+    {
+        v.Visit(*this);
+    }
 
 private:
 
@@ -146,8 +143,9 @@ public:
     }
 
     virtual ~AmplitudeModulator() = default;
-    virtual void Accept(OpVisitor& v) override;
+
+    void Accept(OpVisitor& v)
+    {
+        v.Visit(*this);
+    }
 };
-
-
-using OperationPtr = std::shared_ptr<Operation>;
